@@ -1,0 +1,44 @@
+```plantuml
+@startuml
+autonumber
+actor Client #green
+participant Website [
+=Website
+----
+""Личный кабинет""
+]
+participant "REST интеграция" as Backend
+participant "Портал клиентского сервиса" as CompanyInternalPortal
+actor "Сотрудник клиентского сервиса" as CustomerServiceAgent 
+participant "Смежная служба" as OtherDepartment
+Client ->> Website : 1: Оставляет обращение
+
+
+Website ->> Backend : 2: POST "/v1/requests/" request body
+activate Backend
+Backend ->> CompanyInternalPortal : 3: Уведомление
+Backend -->> Website : Уведомление "Обращение находится в обработке"
+Client ->> Website : Проверить сообщения
+deactivate Backend
+alt SPAM
+	CustomerServiceAgent ->> CompanyInternalPortal : Это спам
+	CompanyInternalPortal <-- CompanyInternalPortal : Добавление в чёрный список
+else Answer
+	CustomerServiceAgent ->> CompanyInternalPortal : Ответ 
+	CompanyInternalPortal ->> Backend : REST
+	Backend ->> Website : POST
+	Website ->> Client : Уведомление
+	
+	
+else Department
+  CustomerServiceAgent ->> OtherDepartment :  Переслать
+  loop Wait for response
+    OtherDepartment ->> CustomerServiceAgent : Ответ после ожидания
+    CustomerServiceAgent ->> CompanyInternalPortal : Ответ 
+  	CompanyInternalPortal ->> Backend : REST
+  	Backend ->> Website : POST
+  	Website ->> Client : Уведомление
+	end
+end
+@enduml
+```
